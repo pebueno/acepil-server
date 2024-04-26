@@ -12,19 +12,21 @@ const timestamp = Date.now().toString();
 // Function to generate the Signature
 function generateSignature() {
   const method = "GET"; // Uppercase method
-//   const timestamp = Date.now().toString(); // Current timestamp
+  //   const timestamp = Date.now().toString(); // Current timestamp
 
   const concatString = method.toLowerCase() + timestamp;
   const secretKey = "senha"; // Replace 'senha' with your actual secret key
 
   //   const concatString = method.toUpperCase() + timestamp;
   //   const hash = CryptoJS.SHA256(concatString).toString(CryptoJS.enc.Base64);
-  const hash = CryptoJS.HmacSHA256(concatString, secretKey).toString(CryptoJS.enc.Base64);
+  const hash = CryptoJS.HmacSHA256(concatString, secretKey).toString(
+    CryptoJS.enc.Base64
+  );
 
   //   const hash = crypto
-//     .createHash("sha256")
-//     .update(concatString)
-//     .digest("base64");
+  //     .createHash("sha256")
+  //     .update(concatString)
+  //     .digest("base64");
 
   return hash;
 }
@@ -67,16 +69,54 @@ app.get("/api", async (req, res) => {
           CodFilial: "1",
           Authorization: `Token ${token}`,
           Timestamp: timestamp,
-          "Access-Control-Allow-Origin": "*"
+          "Access-Control-Allow-Origin": "*",
         },
       }
     );
 
     // Return the client data as the response
     res.json(clientResponse.data);
-
   } catch (error) {
     console.error("Error:", error.message);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Define a route to fetch products
+app.get("/api/products", async (req, res) => {
+  try {
+    const signature = generateSignature();
+    const authResponse = await axios.get(
+      "http://idealsoftexportaweb.eastus.cloudapp.azure.com:60500/auth/?serie=HIEAPA-600759-ROCT&codfilial=1",
+      {
+        headers: {
+          "cache-control": "no-cache",
+          Signature: "-1",
+        },
+      }
+    );
+
+    const token = authResponse.data.dados.token;
+
+    // Make the request to fetch product data
+    const productResponse = await axios.get(
+      `http://idealsoftexportaweb.eastus.cloudapp.azure.com:60500/produtos/1`,
+      {
+        headers: {
+          "cache-control": "no-cache",
+          Signature: signature,
+          CodFilial: "1",
+          Authorization: `Token ${token}`,
+          Timestamp: timestamp,
+          "Access-Control-Allow-Origin": "*",
+        },
+      }
+    );
+
+    // Return the product data as the response
+    res.json(productResponse.data);
+  } catch (error) {
+    console.error("Error fetching product:", error.message);
     res.status(500).json({ error: "Internal server error" });
   }
 });
