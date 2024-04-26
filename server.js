@@ -3,8 +3,11 @@ const express = require("express");
 const axios = require("axios");
 // const crypto = require("crypto");
 const CryptoJS = require("crypto-js");
+const cors = require("cors");
 
 const app = express();
+app.use(cors());
+
 const PORT = process.env.PORT || 3000;
 // var timestamp = Math.floor(Date.now() / 1000).toString();
 const timestamp = Date.now().toString();
